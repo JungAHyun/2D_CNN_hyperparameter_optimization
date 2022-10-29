@@ -1,0 +1,42 @@
+# program: w_use_wandb_2.py
+# method: grid
+# metric:
+#   goal: minimize
+#   name: mae
+# parameters:
+#   conv:
+#     values: [128, 256, 512, 1024]
+#   learning_rate:
+#     values: [0.0001, 0.001, 0.01]
+#   epoch:
+#     value: 10
+#   optimizer:
+#     values: ['adam', 'nadam', 'sgd', 'rmsprop']
+#   # kernel_size: 
+#   #    values: [(7, 7), '(5, 5)', '(3, 3)']
+#   activation:
+#     values:  ['swish','relu','sigmoid']
+#   batch_size:
+#     values: [32, 64, 128]
+
+
+# activation comparison config
+program: w_use_wandb_2.py
+method: grid
+metric:
+  goal: minimize
+  name: mae
+parameters:
+  conv:
+    values: [128]
+  learning_rate:
+    values: [0.0001]
+  epoch: 
+    value: 50
+  optimizer:
+    values: ['adam']
+  activation:
+    values:  ['swish','relu','sigmoid', 'tanh', 'elu' ]
+  batch_size:
+    values: [64]
+
