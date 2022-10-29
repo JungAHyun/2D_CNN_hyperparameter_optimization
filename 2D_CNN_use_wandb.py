@@ -1,5 +1,6 @@
 import csv
 from distutils.command.config import config
+from unicodedata import name
 import pandas as pd
 import numpy as np
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
@@ -10,7 +11,8 @@ import tensorflow as tf
 from tensorflow import keras
 
 import wandb
-
+config_wandb =0
+num = 1
 
 # wandb.init(
 #     project="my-test-project",
@@ -32,88 +34,52 @@ import wandb
 
 # config = wandb.config
 
-sweep_config = {
-    'method': 'random', #grid, random
-    'metric': {
-      'name': 'mae',   
-    },
-    'parameters': {
-        'epoch': {
-            'values': [10, 50, 100]
-        },
-        # 'dropout': {
-        #     'values': [0.3, 0.4, 0.5]
-        # },
-        'conv_1': {
-            'values': [128, 256, 512, 1024]
-        },
-        'conv_2': {
-            'values': [128, 256, 512, 1024]
-        },          
-        'conv_3': {
-            'values': [128, 256, 512, 1024]
-        },
-        'optimizer': {
-            'values': ['adam', 'nadam', 'sgd', 'rmsprop']
-        },
-        'activation_1': {
-            'values': ['swish','relu', 'elu', 'selu','sigmoid']
-        },
-        'kernel_size': {
-            'values': [(7, 7), (5, 5), (3, 3)]
-        },
-        'learning_rates': {
-            'values': [0.0001, 0.001, 0.01]
-        },
-        'batch_size': {
-            'values': [32, 64, 128 ]
-        }
-    }
-}
-
-sweep_id = wandb.sweep(sweep_config, entity='ahjung', project="first_steps")
 
 
-# Default values for hyperparameters we're going to sweep over
-config_defaults = {
-    "conv_1": 128,
-    "activation_1": "swish",
-    "kernel_size": (3, 3),
-    "pool_size": (2, 2),
-    # "dropout": 0.1,
-    "conv_2": 128,
-    "conv_3": 128,
-    "optimizer": "adam",
-    "loss": "mae",
-    "metric": "mae",
-    "epoch": 50,
-    "batch_size": 64,
-    'learning_rate' : 0.0001
+# def make_wandb():
+#     global config_wandb
+#     # Default values for hyperparameters we're going to sweep over
+#     config_defaults = {
+#         "conv_1": 128,
+#         "activation_1": "swish",
+#         "kernel_size":((7, 7)),
+#         "pool_size": (2, 2),
+#         # "dropout": 0.1,
+#         "conv_2": 128,
+#         "conv_3": 128,
+#         "optimizer": "adam",
+#         "loss": "mae",
+#         "metric": "mae",
+#         "epoch": 50,
+#         "batch_size": 64,
+#         'learning_rate' : 0.0001
 
-}
+#     }
 
-# Initialize a new wandb run
-wandb.init(config=config_defaults, group='first_sweeps')
-    
-# config is a variable that holds and saves hyperparameters and inputs
-config = wandb.config
+#     # Initialize a new wandb run
+#     wandb.init(config=config_defaults, group='first_sweeps')
+        
+#     # config is a variable that holds and saves hyperparameters and inputs
+#     config_wandb = wandb.config
 
 
-def make_2d_cnn(model):
-    model.add(Conv2D(config.conv_1, config.kernel_size, padding='same', activation=config.activation_1, input_shape=(59,21,1)))
-    model.add(MaxPooling2D(2, 2))
-    model.add(Conv2D(config.conv_2, config.kernel_size, padding='same', activation=config.activation_1))
-    model.add(MaxPooling2D(2, 2))
-    model.add(Conv2D(config.conv_3, config.kernel_size, padding='same', activation=config.activation_1))
-    model.add(MaxPooling2D(2, 2))
-    model.add(Flatten())
-    model.add(Dense(2048, activation=config.activation_1))
-    model.add(Dense(2048, activation=config.activation_1))
-    model.add(Dense(2048, activation=config.activation_1))
-    model.add(Dense(2048, activation=config.activation_1))
-    model.add(Dense(1, activation=None))
 
-    return model  
+# def make_2d_cnn(model):
+#     global config_wandb
+#     model.add(Conv2D(config_wandb.conv_1, config_wandb.kernel_size, padding='same', activation=config_wandb.activation_1, input_shape=(59,21,1)))
+#     model.add(MaxPooling2D(2, 2))
+#     model.add(Conv2D(config_wandb.conv_2, config_wandb.kernel_size, padding='same', activation=config_wandb.activation_1))
+#     model.add(MaxPooling2D(2, 2))
+#     model.add(Conv2D(config_wandb.conv_3, config_wandb.kernel_size, padding='same', activation=config_wandb.activation_1))
+#     model.add(MaxPooling2D(2, 2))
+#     model.add(Flatten())
+#     model.add(Dense(2048, activation=config_wandb.activation_1))
+#     model.add(Dense(2048, activation=config_wandb.activation_1))
+#     model.add(Dense(2048, activation=config_wandb.activation_1))
+#     model.add(Dense(2048, activation=config_wandb.activation_1))
+#     model.add(Dense(1, activation=None))
+
+#     return model  
 
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -184,41 +150,43 @@ class PrintDot(keras.callbacks.Callback):
             print('.', end='')
 
 
-def train(model):
-    adam= tf.keras.optimizers.Adam(lr=config.learning_rate)
+def train():
+    # global config_wandb
+
+  # config is a variable that holds and saves hyperparameters and inputs
+    config_wandb = wandb.config
+    
+    model = tf.keras.Sequential()
+    model.add(Conv2D(config_wandb.conv, kernel_size =(7, 7), padding='same', activation=config_wandb.activation, input_shape=(59,21,1)))
+    model.add(MaxPooling2D(2, 2))
+    model.add(Conv2D(config_wandb.conv, kernel_size =(5, 5), padding='same', activation=config_wandb.activation))
+    model.add(MaxPooling2D(2, 2))
+    model.add(Conv2D(config_wandb.conv, kernel_size =(3, 3), padding='same', activation=config_wandb.activation))
+    model.add(MaxPooling2D(2, 2))
+    model.add(Flatten())
+    model.add(Dense(2048, activation=config_wandb.activation))
+    model.add(Dense(2048, activation=config_wandb.activation))
+    model.add(Dense(2048, activation=config_wandb.activation))
+    model.add(Dense(2048, activation=config_wandb.activation))
+    model.add(Dense(1, activation=None))
+    adam= tf.keras.optimizers.Adam(lr=config_wandb.learning_rate)
 
     model.compile(optimizer=adam,
               loss='mse',
               metrics=['mae'])
               
-    model.fit(x_train, y_train, epochs=config.epoch, shuffle=True, batch_size = config.batch_size)
+    model.fit(x_train, y_train, epochs=config_wandb.epoch, shuffle=True, batch_size = config_wandb.batch_size)
+
 
     y_pred = model.predict(x_test)
     y_pred = y_pred.squeeze()
 
+    wandb.log({
+        "r2 score": r2_score(y_true=y_test, y_pred=y_pred),
+        "MAE": mean_absolute_error(y_true=y_test, y_pred=y_pred),
+        "MRE": np.mean(np.divide(np.absolute(np.subtract(y_test, y_pred)), y_test))*100
+    })
 
-if __name__ == "__main__":
-    # # angle=np.array(angle)   
-    # # angle = angle.reshape(14247,1,1)
-    angle = angle.squeeze()
-    pp = pp.reshape(-1, 59,21,1)
-
-    print(angle.shape)      #(5896, )
-    print(pp.shape)          #(5896, 59,21)
-
-    x_train, x_test, y_train, y_test = train_test_split(pp, angle, test_size=0.2, shuffle=True)    
-    # model = build_model()
-    # model.summary()
-    # EPOCHS = 100
-    # model.fit(pp, angle ,validation_split=0.2, epochs=EPOCHS, verbose=2)
-
-    model = tf.keras.Sequential()
-    model = make_2d_cnn(model)
-
-    wandb.agent(sweep_id,train(model))
-
-    y_pred = model.predict(x_test)
-    y_pred = y_pred.squeeze()
 
     save_filepath = '2022_10_cnn_result\\case2_result.csv'
     f =  open(save_filepath, 'w', encoding='utf-8', newline="")
@@ -239,6 +207,93 @@ if __name__ == "__main__":
     print("r2 score: ", r2_score(y_true=y_test, y_pred=y_pred))
     print("=========================")
     model.summary()
+
+
+
+def init_wandb():
+    global num
+    # Default values for hyperparameters we're going to sweep over
+    # Set up your default hyperparameters before wandb.init
+    # so they get properly set in the sweep
+    hyperparameter_defaults = dict(
+        conv =  128,
+        activation = "swish",
+        # kernel_size =((7, 7)),
+        # pool_size = (2, 2),
+        # "dropout": 0.1,
+        optimizer ="adam",
+        loss="mae",
+        metric="mae",
+        epoch= 50,
+        batch_size= 64,
+        learning_rate = 0.0001
+        )
+
+    # Pass your defaults to wandb.init
+    wandb.init(config=hyperparameter_defaults)
+    # wandb.run.name = 'Case' + str(num)
+    # num=num+1
+    # print(num)
+
+
+
+
+
+if __name__ == "__main__":
+
+    angle = angle.squeeze()
+    pp = pp.reshape(-1, 59,21,1)
+
+    print(angle.shape)      #(5896, )
+    print(pp.shape)          #(5896, 59,21)
+
+    x_train, x_test, y_train, y_test = train_test_split(pp, angle, test_size=0.2, shuffle=True)    
+
+
+
+
+
+
+    init_wandb()
+    train()
+
+    
+
+  
+
+    # sweep_id = get_sweep_id()
+    # wandb.agent(sweep_id,train())
+
+
+    # y_pred = model.predict(x_test)
+    # y_pred = y_pred.squeeze()
+    
+
+    #코드
+    # wandb.log({
+    #     "r2 score": r2_score(y_true=y_test, y_pred=y_pred)
+    # })
+
+
+    # save_filepath = '2022_10_cnn_result\\case2_result.csv'
+    # f =  open(save_filepath, 'w', encoding='utf-8', newline="")
+    # wr = csv.writer(f)
+    # for i in range(len(y_test)-1):
+    #     wr.writerow([y_test[i], y_pred[i]])
+
+    # print("========= Result =========")
+    # print("MAE: ",mean_absolute_error(y_true=y_test, y_pred=y_pred))
+    # print("MAE2: ", np.mean(np.abs(y_test - y_pred)))
+    # print("std: ", np.std(np.absolute(np.subtract(y_test, y_pred))))
+    # print("=========================")
+    # print("ME: ", np.mean(np.subtract(y_test, y_pred)))
+    # print("std: ", np.std(np.subtract(y_test, y_pred)))
+    # print("=========================")
+    # print("mean relative error: ", np.mean(np.divide(np.absolute(np.subtract(y_test, y_pred)), y_test))*100)
+    # print("=========================")        
+    # print("r2 score: ", r2_score(y_true=y_test, y_pred=y_pred))
+    # print("=========================")
+    # model.summary()
     
  
 # # patience 매개변수는 성능 향상을 체크할 에포크 횟수입니다
