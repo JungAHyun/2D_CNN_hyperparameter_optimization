@@ -1,4 +1,4 @@
-【 W&B(wandb)를 활용하여 CNN 하이퍼 파라미터 최적화 하기 】
+◈ W&B(wandb)를 활용하여 CNN 하이퍼 파라미터 최적화 하기 ◈
 
 ▶ 실행 방법 
 1. W&B(wandb) 계정 만들기 (https://wandb.ai/home)
