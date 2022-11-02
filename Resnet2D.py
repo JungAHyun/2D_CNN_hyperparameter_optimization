@@ -8,6 +8,8 @@ from tensorflow.keras.layers import (
 )
 from sklearn.metrics import mean_absolute_error, r2_score
 from tensorflow.keras.layers import Layer
+from tensorflow.keras.optimizers.schedules import ExponentialDecay
+from tensorflow.keras.optimizers import Adam
 import numpy as np
 import tensorflow as tf
 import csv
@@ -92,7 +94,7 @@ class DataReader():
 class Resnet2DConfig:
     activation = "swish"  # ReLU | swish
     out_activ = None  # None | ReLU | swish
-    model_size = 50
+    model_size = 101
     resnet_50 = [3, 4, 6, 3]
     resnet_101 = [3, 4, 23, 3]
     output_size = 1
@@ -127,12 +129,7 @@ class Resnet2D(Model):
 
         self.avgpool = GlobalAveragePooling2D()
 
-        if self.conf.use_features:
-            self.feature_dense = Dense(2048, activation=self.conf.activation)
-
-        self.output_dense = Dense(
-            units=self.conf.output_size, activation=self.conf.out_activ
-        )
+        self.output_dense = Dense(2048)
 
     def call(self, inputs, training=False):
         image = inputs
@@ -203,6 +200,18 @@ def build_bottleneck_block_2d(filter_num, blocks, stride=1):
 
     return res_block
 
+def set_optimizer():
+    scheduler = ExponentialDecay(
+        initial_learning_rate=0.1e-3,
+        decay_steps=1000,
+        decay_rate=0.94,
+        staircase=False,
+    )
+
+    optimizer = Adam(learning_rate=scheduler)
+    return optimizer
+
+
 
 if __name__ == '__main__':
 
@@ -246,29 +255,33 @@ if __name__ == '__main__':
     model = Resnet2D()
 
     adam= tf.keras.optimizers.Adam(lr=0.0001)
-    model.compile(optimizer=adam, loss='mse',metrics=['mae'])
-    model.fit(x_train, y_train, epochs=50, shuffle=True, batch_size = 64)
+    optim = set_optimizer()
+    model.compile(optimizer=optim, loss='mse',metrics=['mae'])
+    model.fit(x_train, y_train, epochs=50, shuffle=True, batch_size = 128)
     
     y_pred = model.predict(x_test)
     y_pred = y_pred.squeeze()
+    y_pred_2=[]
+    for i in range(len(y_pred)):
+        y_pred_2.append(y_pred[i][0])
 
     save_filepath = 'result\\shuffle_Resnet50_result.csv'
     f =  open(save_filepath, 'w', encoding='utf-8', newline="")
     wr = csv.writer(f)
     for i in range(len(y_test)-1):
-        wr.writerow([y_test[i], y_pred[i]])
+        wr.writerow([y_test[i], y_pred_2[i]])
 
     
     print("========= Result =========")
-    print("MAE: ",mean_absolute_error(y_true=y_test, y_pred=y_pred))
-    print("MAE2: ", np.mean(np.abs(y_test - y_pred)))
-    print("std: ", np.std(np.absolute(np.subtract(y_test, y_pred))))
+    print("MAE: ",mean_absolute_error(y_true=y_test, y_pred=y_pred_2))
+    print("MAE2: ", np.mean(np.abs(y_test - y_pred_2)))
+    print("std: ", np.std(np.absolute(np.subtract(y_test, y_pred_2))))
     print("=========================")
-    print("ME: ", np.mean(np.subtract(y_test, y_pred)))
-    print("std: ", np.std(np.subtract(y_test, y_pred)))
+    print("ME: ", np.mean(np.subtract(y_test, y_pred_2)))
+    print("std: ", np.std(np.subtract(y_test, y_pred_2)))
     print("=========================")
-    print("mean relative error: ", np.mean(np.divide(np.absolute(np.subtract(y_test, y_pred)), y_test))*100)
+    print("mean relative error: ", np.mean(np.divide(np.absolute(np.subtract(y_test, y_pred_2)), y_test))*100)
     print("=========================")        
-    print("r2 score: ", r2_score(y_true=y_test, y_pred=y_pred))
+    print("r2 score: ", r2_score(y_true=y_test, y_pred=y_pred_2))
     print("=========================")
     model.summary()
